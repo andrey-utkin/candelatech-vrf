@@ -6,3 +6,4 @@ check:
 	LD_PRELOAD=./intercept.so  nslookup google.com; [[ $$? == 77 ]]
 	LD_PRELOAD=./intercept.so  ping -c1 google.com; [[ $$? == 77 ]]
 	LD_PRELOAD=./intercept.so  dig google.com; [[ $$? == 77 ]]
+	LD_PRELOAD=./intercept.so  host google.com; [[ $$? == 77 ]]
