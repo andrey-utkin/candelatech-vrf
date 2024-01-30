@@ -1,5 +1,5 @@
 intercept.so: intercept.c
-	gcc -Wall -fPIC -shared -o intercept.so intercept.c -lcares
+	gcc -ggdb3 -Wall -fPIC -shared -o intercept.so intercept.c -lcares
 
 check:
 	LD_PRELOAD=./intercept.so  getent hosts google.com; [[ $$? == 66 ]]

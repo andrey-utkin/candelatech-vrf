@@ -16,11 +16,30 @@ struct hostent *gethostbyname2(const char *name, int af)
     exit(66);
 }
 
+static void z(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
+{
+    // casted struct copying, replace with per-field copying later
+    *libc_addrinfo = *(struct addrinfo*)node;
+    libc_addrinfo->ai_flags = node->ai_flags;
+    libc_addrinfo->ai_family = node->ai_family;
+    libc_addrinfo->ai_socktype = node->ai_socktype;
+    libc_addrinfo->ai_protocol = node->ai_protocol;
+    libc_addrinfo->ai_addrlen = node->ai_addrlen;
+
+    libc_addrinfo->ai_next = NULL;
+    libc_addrinfo->ai_addr = calloc(1, libc_addrinfo->ai_addrlen);
+    memcpy(libc_addrinfo->ai_addr, node->ai_addr, libc_addrinfo->ai_addrlen);
+}
+
 static void ai_callback(void *arg, int status, int timeouts,
                         struct ares_addrinfo *result)
 {
   struct ares_addrinfo_node *node = NULL;
   (void)timeouts;
+  struct addrinfo **restrict libc_res = arg;
+  *libc_res = calloc(1, sizeof(struct addrinfo));
+  struct addrinfo *libc_addrinfo = libc_res[0];
+
 
 
   if (status != ARES_SUCCESS) {
@@ -31,19 +50,22 @@ static void ai_callback(void *arg, int status, int timeouts,
   for (node = result->nodes; node != NULL; node = node->ai_next) {
     char        addr_buf[64] = "";
     const void *ptr          = NULL;
+
     if (node->ai_family == AF_INET) {
       const struct sockaddr_in *in_addr =
         (const struct sockaddr_in *)((void *)node->ai_addr);
       ptr = &in_addr->sin_addr;
+      z(libc_addrinfo, node);
     } else if (node->ai_family == AF_INET6) {
       const struct sockaddr_in6 *in_addr =
         (const struct sockaddr_in6 *)((void *)node->ai_addr);
       ptr = &in_addr->sin6_addr;
+      z(libc_addrinfo, node);
     } else {
       continue;
     }
     ares_inet_ntop(node->ai_family, ptr, addr_buf, sizeof(addr_buf));
-    printf("%-32s\t%s\n", result->name, addr_buf);
+    printf(__FILE__ ": %-32s\t%s\n", result->name, addr_buf);
   }
 
   ares_freeaddrinfo(result);
@@ -70,7 +92,7 @@ int getaddrinfo(const char *restrict libc_node,
         hints.ai_socktype = libc_hints->ai_socktype;
         hints.ai_protocol = libc_hints->ai_protocol;
     }
-    ares_getaddrinfo(channel, libc_node, libc_service, &hints, ai_callback, /*arg=*/NULL);
+    ares_getaddrinfo(channel, libc_node, libc_service, &hints, ai_callback, /*arg=*/libc_res);
 
     // wait for the query to be completed...
     // fill back the output parameters...
@@ -92,10 +114,12 @@ int getaddrinfo(const char *restrict libc_node,
     }
 
     ares_library_cleanup();
-    exit(77);
+    //exit(77);
+    return 0;
 }
 
 void freeaddrinfo(struct addrinfo *res)
 {
-    exit(77);
+    //exit(77);
+    free(res);
 }
