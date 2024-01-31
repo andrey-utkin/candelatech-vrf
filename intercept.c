@@ -26,8 +26,6 @@ static void z(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
     libc_addrinfo->ai_socktype = node->ai_socktype;
     libc_addrinfo->ai_protocol = node->ai_protocol;
     libc_addrinfo->ai_addrlen = node->ai_addrlen;
-
-    libc_addrinfo->ai_next = NULL;
     libc_addrinfo->ai_addr = calloc(1, libc_addrinfo->ai_addrlen);
     memcpy(libc_addrinfo->ai_addr, node->ai_addr, libc_addrinfo->ai_addrlen);
 }
@@ -39,7 +37,8 @@ static void ai_callback(void *arg, int status, int timeouts,
   (void)timeouts;
   struct addrinfo **restrict libc_res = arg;
   size_t libc_res_nmemb = 0;
-  int cur_memb = 0;
+  int next_memb = 0;
+  struct addrinfo *libc_addrinfo = NULL;
   *libc_res = NULL;
 
 
@@ -53,12 +52,16 @@ static void ai_callback(void *arg, int status, int timeouts,
     char        addr_buf[64] = "";
     const void *ptr          = NULL;
 
-    if (libc_res_nmemb <= cur_memb) {
+    if (libc_res_nmemb <= next_memb) {
       libc_res_nmemb += 1;
       *libc_res = reallocarray(*libc_res, libc_res_nmemb, sizeof(struct addrinfo));
     }
-    struct addrinfo *libc_addrinfo = &((*libc_res)[cur_memb]);
-    cur_memb += 1;
+    struct addrinfo *next = &((*libc_res)[next_memb]);
+    if (libc_addrinfo) {
+      libc_addrinfo->ai_next = next;
+    }
+    libc_addrinfo = next;
+    next_memb += 1;
 
     if (node->ai_family == AF_INET) {
       const struct sockaddr_in *in_addr =
