@@ -147,6 +147,15 @@ int getaddrinfo(const char *restrict libc_node,
             }
         }
     }
+    const char *servers_csv = getenv("SERVERS_CSV");
+    if (servers_csv) {
+        r = ares_set_servers_csv(channel, servers_csv);
+        if (r != ARES_SUCCESS) {
+            if (getenv("DEBUG")) {
+                fprintf(stderr, __FILE__ ": ares_set_servers_csv(%s) failed: %d\n", servers_csv, r);
+            }
+        }
+    }
 
     ares_getaddrinfo(channel, libc_node, libc_service, &hints, ai_callback, /*arg=*/libc_res);
 
