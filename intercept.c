@@ -17,9 +17,8 @@ struct hostent *gethostbyname2(const char *name, int af)
     exit(66);
 }
 
-static void z(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
+static void addrinfo_from_ares(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
 {
-    // casted struct copying, replace with per-field copying later
     *libc_addrinfo = *(struct addrinfo*)node;
     libc_addrinfo->ai_flags = node->ai_flags;
     libc_addrinfo->ai_family = node->ai_family;
@@ -63,12 +62,12 @@ static void ai_callback(void *arg, int status, int timeouts,
       const struct sockaddr_in *in_addr =
         (const struct sockaddr_in *)((void *)node->ai_addr);
       ptr = &in_addr->sin_addr;
-      z(libc_addrinfo, node);
+      addrinfo_from_ares(libc_addrinfo, node);
     } else if (node->ai_family == AF_INET6) {
       const struct sockaddr_in6 *in_addr =
         (const struct sockaddr_in6 *)((void *)node->ai_addr);
       ptr = &in_addr->sin6_addr;
-      z(libc_addrinfo, node);
+      addrinfo_from_ares(libc_addrinfo, node);
     } else {
       continue;
     }
