@@ -33,63 +33,63 @@ static void addrinfo_from_ares(struct addrinfo *libc_addrinfo, struct ares_addri
 static void ai_callback(void *arg, int status, int timeouts,
                         struct ares_addrinfo *result)
 {
-  struct ares_addrinfo_node *node = NULL;
-  (void)timeouts;
-  struct addrinfo **restrict libc_res = arg;
-  size_t libc_res_nmemb = 0;
-  int next_memb = 0;
-  *libc_res = NULL;
+    struct ares_addrinfo_node *node = NULL;
+    (void)timeouts;
+    struct addrinfo **restrict libc_res = arg;
+    size_t libc_res_nmemb = 0;
+    int next_memb = 0;
+    *libc_res = NULL;
 
 
 
-  if (status != ARES_SUCCESS) {
-    if (getenv("DEBUG")) {
-      fprintf(stderr, __FILE__ ": %s: %s\n", (char *)arg, ares_strerror(status));
+    if (status != ARES_SUCCESS) {
+        if (getenv("DEBUG")) {
+            fprintf(stderr, __FILE__ ": %s: %s\n", (char *)arg, ares_strerror(status));
+        }
+        return;
     }
-    return;
-  }
 
-  for (node = result->nodes; node != NULL; node = node->ai_next) {
-    char        addr_buf[64] = "";
-    const void *ptr          = NULL;
+    for (node = result->nodes; node != NULL; node = node->ai_next) {
+        char        addr_buf[64] = "";
+        const void *ptr          = NULL;
 
-    if (libc_res_nmemb <= next_memb) {
-      libc_res_nmemb += 1;
-      *libc_res = reallocarray(*libc_res, libc_res_nmemb, sizeof(struct addrinfo));
-    }
-    struct addrinfo *libc_addrinfo = &((*libc_res)[next_memb]);
-    next_memb += 1;
+        if (libc_res_nmemb <= next_memb) {
+            libc_res_nmemb += 1;
+            *libc_res = reallocarray(*libc_res, libc_res_nmemb, sizeof(struct addrinfo));
+        }
+        struct addrinfo *libc_addrinfo = &((*libc_res)[next_memb]);
+        next_memb += 1;
 
-    if (node->ai_family == AF_INET) {
-      const struct sockaddr_in *in_addr =
-        (const struct sockaddr_in *)((void *)node->ai_addr);
-      ptr = &in_addr->sin_addr;
-      addrinfo_from_ares(libc_addrinfo, node);
-    } else if (node->ai_family == AF_INET6) {
-      const struct sockaddr_in6 *in_addr =
-        (const struct sockaddr_in6 *)((void *)node->ai_addr);
-      ptr = &in_addr->sin6_addr;
-      addrinfo_from_ares(libc_addrinfo, node);
-    } else {
-      continue;
+        if (node->ai_family == AF_INET) {
+            const struct sockaddr_in *in_addr =
+                (const struct sockaddr_in *)((void *)node->ai_addr);
+            ptr = &in_addr->sin_addr;
+            addrinfo_from_ares(libc_addrinfo, node);
+        } else if (node->ai_family == AF_INET6) {
+            const struct sockaddr_in6 *in_addr =
+                (const struct sockaddr_in6 *)((void *)node->ai_addr);
+            ptr = &in_addr->sin6_addr;
+            addrinfo_from_ares(libc_addrinfo, node);
+        } else {
+            continue;
+        }
+        ares_inet_ntop(node->ai_family, ptr, addr_buf, sizeof(addr_buf));
+        if (getenv("DEBUG")) {
+            printf(__FILE__ ": %-32s\t%s\n", result->name, addr_buf);
+        }
     }
-    ares_inet_ntop(node->ai_family, ptr, addr_buf, sizeof(addr_buf));
-    if (getenv("DEBUG")) {
-      printf(__FILE__ ": %-32s\t%s\n", result->name, addr_buf);
-    }
-  }
 
-  // Link ai_next. Do it late because we reallocate as we read the results.
-  for (int i = 0; i < next_memb; i++) {
-    struct addrinfo *cur  = &((*libc_res)[i  ]);
-    struct addrinfo *next = &((*libc_res)[i+1]);
-    if (i == next_memb - 1) {
-      cur->ai_next = NULL;
-    } else {
-      cur->ai_next = next;
+    // Link ai_next. Do it late because we reallocate as we read the results.
+    for (int i = 0; i < next_memb; i++) {
+        struct addrinfo *cur  = &((*libc_res)[i  ]);
+        struct addrinfo *next = &((*libc_res)[i+1]);
+        if (i == next_memb - 1) {
+            cur->ai_next = NULL;
+        } else {
+            cur->ai_next = next;
+        }
     }
-  }
-  ares_freeaddrinfo(result);
+    ares_freeaddrinfo(result);
 }
 
 // used by: nslookup, ping, dig
@@ -115,7 +115,7 @@ int getaddrinfo(const char *restrict libc_node,
     }
     const char *name_override = getenv("NAME_OVERRIDE");
     if (name_override && name_override[0] != '\0') {
-      libc_node = name_override;
+        libc_node = name_override;
     }
     ares_getaddrinfo(channel, libc_node, libc_service, &hints, ai_callback, /*arg=*/libc_res);
 
