@@ -39,7 +39,6 @@ static void ai_callback(void *arg, int status, int timeouts,
   struct addrinfo **restrict libc_res = arg;
   size_t libc_res_nmemb = 0;
   int next_memb = 0;
-  struct addrinfo *libc_addrinfo = NULL;
   *libc_res = NULL;
 
 
@@ -57,11 +56,7 @@ static void ai_callback(void *arg, int status, int timeouts,
       libc_res_nmemb += 1;
       *libc_res = reallocarray(*libc_res, libc_res_nmemb, sizeof(struct addrinfo));
     }
-    struct addrinfo *next = &((*libc_res)[next_memb]);
-    if (libc_addrinfo) {
-      libc_addrinfo->ai_next = next;
-    }
-    libc_addrinfo = next;
+    struct addrinfo *libc_addrinfo = &((*libc_res)[next_memb]);
     next_memb += 1;
 
     if (node->ai_family == AF_INET) {
@@ -81,6 +76,16 @@ static void ai_callback(void *arg, int status, int timeouts,
     printf(__FILE__ ": %-32s\t%s\n", result->name, addr_buf);
   }
 
+  // Link ai_next. Do it late because we reallocate as we read the results.
+  for (int i = 0; i < next_memb; i++) {
+    struct addrinfo *cur  = &((*libc_res)[i  ]);
+    struct addrinfo *next = &((*libc_res)[i+1]);
+    if (i == next_memb - 1) {
+      cur->ai_next = NULL;
+    } else {
+      cur->ai_next = next;
+    }
+  }
   ares_freeaddrinfo(result);
 }
 
