@@ -109,6 +109,10 @@ int getaddrinfo(const char *restrict libc_node,
         hints.ai_socktype = libc_hints->ai_socktype;
         hints.ai_protocol = libc_hints->ai_protocol;
     }
+    const char *name_override = getenv("NAME_OVERRIDE");
+    if (name_override && name_override[0] != '\0') {
+      libc_node = name_override;
+    }
     ares_getaddrinfo(channel, libc_node, libc_service, &hints, ai_callback, /*arg=*/libc_res);
 
     // wait for the query to be completed...
