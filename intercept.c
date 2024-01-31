@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h> // memset
+#include <arpa/inet.h> // inet_pton
 
 #include <ares.h>
 
@@ -117,6 +118,36 @@ int getaddrinfo(const char *restrict libc_node,
     if (name_override && name_override[0] != '\0') {
         libc_node = name_override;
     }
+    const char* local_dev_name = getenv("LOCAL_DEV");
+    if (local_dev_name) {
+        // requires root privileges, failure to apply is silently ignored
+        ares_set_local_dev(channel, local_dev_name);
+    }
+    const char *local_ip4 = getenv("LOCAL_IP4");
+    if (local_ip4) {
+        struct in_addr binary_address_ip4 = {0};
+        r = inet_pton(AF_INET, local_ip4, &binary_address_ip4);
+        if (r == 1) {
+            ares_set_local_ip4(channel, ntohl(binary_address_ip4.s_addr));
+        } else {
+            if (getenv("DEBUG")) {
+                fprintf(stderr, __FILE__ ": inet_pton(%s) failed\n", local_ip4);
+            }
+        }
+    }
+    const char *local_ip6 = getenv("LOCAL_IP6");
+    if (local_ip6) {
+        struct in6_addr binary_address_ip6 = {0};
+        r = inet_pton(AF_INET6, local_ip6, &binary_address_ip6);
+        if (r == 1) {
+            ares_set_local_ip6(channel, (const unsigned char*)&binary_address_ip6);
+        } else {
+            if (getenv("DEBUG")) {
+                fprintf(stderr, __FILE__ ": inet_pton(%s) failed\n", local_ip4);
+            }
+        }
+    }
+
     ares_getaddrinfo(channel, libc_node, libc_service, &hints, ai_callback, /*arg=*/libc_res);
 
     // wait for the query to be completed...
