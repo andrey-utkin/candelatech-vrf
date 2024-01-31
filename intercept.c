@@ -28,6 +28,7 @@ static void z(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
     libc_addrinfo->ai_addrlen = node->ai_addrlen;
     libc_addrinfo->ai_addr = malloc(libc_addrinfo->ai_addrlen);
     memcpy(libc_addrinfo->ai_addr, node->ai_addr, libc_addrinfo->ai_addrlen);
+    libc_addrinfo->ai_canonname = NULL; // c-ares doesn't provide it
 }
 
 static void ai_callback(void *arg, int status, int timeouts,
