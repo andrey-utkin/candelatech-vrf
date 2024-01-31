@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200112L
+#define _DEFAULT_SOURCE // reallocarray()
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,8 +38,9 @@ static void ai_callback(void *arg, int status, int timeouts,
   struct ares_addrinfo_node *node = NULL;
   (void)timeouts;
   struct addrinfo **restrict libc_res = arg;
-  *libc_res = calloc(1, sizeof(struct addrinfo));
-  struct addrinfo *libc_addrinfo = libc_res[0];
+  size_t libc_res_nmemb = 0;
+  int cur_memb = 0;
+  *libc_res = NULL;
 
 
 
@@ -50,6 +52,13 @@ static void ai_callback(void *arg, int status, int timeouts,
   for (node = result->nodes; node != NULL; node = node->ai_next) {
     char        addr_buf[64] = "";
     const void *ptr          = NULL;
+
+    if (libc_res_nmemb <= cur_memb) {
+      libc_res_nmemb += 1;
+      *libc_res = reallocarray(*libc_res, libc_res_nmemb, sizeof(struct addrinfo));
+    }
+    struct addrinfo *libc_addrinfo = &((*libc_res)[cur_memb]);
+    cur_memb += 1;
 
     if (node->ai_family == AF_INET) {
       const struct sockaddr_in *in_addr =
