@@ -43,7 +43,9 @@ static void ai_callback(void *arg, int status, int timeouts,
 
 
   if (status != ARES_SUCCESS) {
-    fprintf(stderr, "%s: %s\n", (char *)arg, ares_strerror(status));
+    if (getenv("DEBUG")) {
+      fprintf(stderr, __FILE__ ": %s: %s\n", (char *)arg, ares_strerror(status));
+    }
     return;
   }
 
@@ -72,7 +74,9 @@ static void ai_callback(void *arg, int status, int timeouts,
       continue;
     }
     ares_inet_ntop(node->ai_family, ptr, addr_buf, sizeof(addr_buf));
-    printf(__FILE__ ": %-32s\t%s\n", result->name, addr_buf);
+    if (getenv("DEBUG")) {
+      printf(__FILE__ ": %-32s\t%s\n", result->name, addr_buf);
+    }
   }
 
   // Link ai_next. Do it late because we reallocate as we read the results.
