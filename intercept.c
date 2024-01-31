@@ -26,7 +26,7 @@ static void z(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
     libc_addrinfo->ai_socktype = node->ai_socktype;
     libc_addrinfo->ai_protocol = node->ai_protocol;
     libc_addrinfo->ai_addrlen = node->ai_addrlen;
-    libc_addrinfo->ai_addr = calloc(1, libc_addrinfo->ai_addrlen);
+    libc_addrinfo->ai_addr = malloc(libc_addrinfo->ai_addrlen);
     memcpy(libc_addrinfo->ai_addr, node->ai_addr, libc_addrinfo->ai_addrlen);
 }
 
@@ -133,5 +133,6 @@ int getaddrinfo(const char *restrict libc_node,
 void freeaddrinfo(struct addrinfo *res)
 {
     //exit(77);
+    //TODO foreach addrinfo: free(ai_addr)
     free(res);
 }
