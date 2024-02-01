@@ -174,6 +174,7 @@ int getaddrinfo(const char *restrict libc_node,
             break;
         tvp = ares_timeout(channel, NULL, &tv);
         count = select(nfds, &readers, &writers, NULL, tvp);
+        (void)(count);
         ares_process(channel, &readers, &writers);
     }
 
