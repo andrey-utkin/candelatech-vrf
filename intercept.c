@@ -20,7 +20,6 @@ struct hostent *gethostbyname2(const char *name, int af)
 
 static void addrinfo_from_ares(struct addrinfo *libc_addrinfo, struct ares_addrinfo_node *node)
 {
-    *libc_addrinfo = *(struct addrinfo*)node;
     libc_addrinfo->ai_flags = node->ai_flags;
     libc_addrinfo->ai_family = node->ai_family;
     libc_addrinfo->ai_socktype = node->ai_socktype;
@@ -178,6 +177,7 @@ int getaddrinfo(const char *restrict libc_node,
         ares_process(channel, &readers, &writers);
     }
 
+    ares_destroy(channel);
     ares_library_cleanup();
     return 0;
 }
