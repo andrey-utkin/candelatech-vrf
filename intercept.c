@@ -179,13 +179,15 @@ int getaddrinfo(const char *restrict libc_node,
     }
 
     ares_library_cleanup();
-    //exit(77);
     return 0;
 }
 
 void freeaddrinfo(struct addrinfo *res)
 {
-    //exit(77);
-    //TODO foreach addrinfo: free(ai_addr)
+    struct addrinfo *entry = res;
+    while (entry) {
+        free(entry->ai_addr);
+        entry = entry->ai_next;
+    }
     free(res);
 }
