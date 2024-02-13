@@ -55,7 +55,7 @@ static void ai_callback(void *arg, int status, int timeouts,
 
         if (libc_res_nmemb <= next_memb) {
             libc_res_nmemb += 1;
-            *libc_res = reallocarray(*libc_res, libc_res_nmemb, sizeof(struct addrinfo));
+            *libc_res = realloc(*libc_res, libc_res_nmemb * sizeof(struct addrinfo));
         }
         struct addrinfo *libc_addrinfo = &((*libc_res)[next_memb]);
         next_memb += 1;
